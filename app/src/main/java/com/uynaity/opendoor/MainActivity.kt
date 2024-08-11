@@ -23,7 +23,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             悦开门Theme {
                 val navController = rememberNavController()
-                val sharedPreferences = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                val sharedPreferences = getSharedPreferences("app_prefs", MODE_PRIVATE)
                 val savedPhone = sharedPreferences.getString("phone", "")
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     NavHost(
