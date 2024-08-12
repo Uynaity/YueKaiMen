@@ -2,6 +2,7 @@ package com.uynaity.opendoor
 
 import android.content.Context
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -10,13 +11,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import com.uynaity.opendoor.ui.RoundBtn
 import com.uynaity.opendoor.ui.theme.悦开门Theme
 import kotlinx.coroutines.delay
 
@@ -28,7 +29,9 @@ class LinkActivity : ComponentActivity() {
             悦开门Theme {
                 val deepLinkData = intent.data?.host
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    DefaultScreen(deepLinkData.toString(), modifier = Modifier.padding(innerPadding)) {
+                    DefaultScreen(
+                        deepLinkData.toString(), modifier = Modifier.padding(innerPadding)
+                    ) {
                         finishAffinity()
                     }
                 }
@@ -43,13 +46,17 @@ fun DefaultScreen(door: String, modifier: Modifier = Modifier, onTaskCompleted: 
     val sharedPreferences = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
     val phone = sharedPreferences.getString("phone", "")
     val client = PostClient()
+    val doorName = if (door == "east") "东门" else "西门"
 
     LaunchedEffect(Unit) {
         if (phone != null) {
-            client.sendPostRequest(context, door, phone)
+            val (code, message) = client.sendPostRequest(context, door, phone)
+            Toast.makeText(context, "$code $message", Toast.LENGTH_SHORT).show()
+            if (code == 200) {
+                delay(3000)
+                onTaskCompleted()
+            }
         }
-        delay(5000)
-        onTaskCompleted()
     }
 
     Column(
@@ -57,7 +64,8 @@ fun DefaultScreen(door: String, modifier: Modifier = Modifier, onTaskCompleted: 
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(text = door)
+        RoundBtn(text = doorName,
+            onClick = { client.sendPostRequest(context, door, phone) })
     }
 }
 

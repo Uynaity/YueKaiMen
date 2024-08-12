@@ -1,6 +1,7 @@
 package com.uynaity.opendoor.ui
 
 import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -36,6 +37,9 @@ import androidx.navigation.compose.rememberNavController
 import com.uynaity.opendoor.PostClient
 import com.uynaity.opendoor.R
 import com.uynaity.opendoor.Routes
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Composable
 fun MainScreen(navController: NavController, modifier: Modifier = Modifier) {
@@ -55,7 +59,8 @@ fun MainScreen(navController: NavController, modifier: Modifier = Modifier) {
 
     LaunchedEffect(Unit) {
         if (auto) {
-            client.sendPostRequest(context, selectedDoor, phone)
+            val (code, message) = client.sendPostRequest(context, selectedDoor, phone)
+            Toast.makeText(context, "$code $message", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -152,11 +157,21 @@ fun DoorSelection(selectedDoor: String, onDoorSelected: (String) -> Unit, enable
 
 @Composable
 fun RoundBtn(
-    text: String, modifier: Modifier = Modifier, onClick: () -> Unit
+    text: String,
+    modifier: Modifier = Modifier,
+    onClick: suspend () -> Pair<Int, String>
 ) {
+    val context = LocalContext.current
+
     Button(
-        onClick = onClick, modifier = modifier
-            .size(96.dp)
+        onClick = {
+            CoroutineScope(Dispatchers.Main).launch {
+                val (code, message) = onClick()
+                Toast.makeText(context, "$code $message", Toast.LENGTH_SHORT).show()
+            }
+        },
+        modifier = modifier
+            .size(128.dp)
             .clip(CircleShape)
     ) {
         Text(text = text)

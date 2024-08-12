@@ -6,6 +6,8 @@
 ## 功能
 - 无登录过期限制
 - 启动软件后自动执行开门
+- DeepLink快捷启动(NFC Feature in Development)
+- 完成开门后自动关闭软件
 - 小破软件，没别的了
 
 ## 下载

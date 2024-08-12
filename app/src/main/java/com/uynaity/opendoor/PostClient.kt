@@ -15,15 +15,15 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 class PostClient {
-    fun sendPostRequest(context: Context, door: String, phone: String?) {
+    suspend fun sendPostRequest(context: Context, door: String, phone: String?): Pair<Int, String> {
 
         val client = HttpClient(Android) {
             install(ContentNegotiation) {
@@ -36,6 +36,7 @@ class PostClient {
 
         val equipmentId = if (door == "east") 15247 else 15248
         val doorName = if (equipmentId == 15247) "东门" else "西门"
+        val result = CompletableDeferred<Pair<Int, String>>()
 
         Toast.makeText(context, "$doorName 开门中...", Toast.LENGTH_SHORT).show()
 
@@ -51,18 +52,12 @@ class PostClient {
                     }
 
                 val responseBody = response.bodyAsText()
-
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(
-                        context, "$doorName $responseBody", Toast.LENGTH_SHORT
-                    ).show()
-                }
+                result.complete(Pair(response.status.value, responseBody))
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "Request failed: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
+                result.complete(Pair(-1, e.message ?: "Unknown error"))
             }
         }
+        return result.await()
     }
 
     @SuppressLint("UnsafeOptInUsageError")
