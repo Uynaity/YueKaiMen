@@ -1,7 +1,6 @@
 package com.uynaity.opendoor.ui
 
 import android.content.Context
-import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,20 +33,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.uynaity.opendoor.PostClient
 import com.uynaity.opendoor.R
 import com.uynaity.opendoor.Routes
-import io.ktor.client.*
-import io.ktor.client.engine.android.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import io.ktor.http.*
-import io.ktor.serialization.kotlinx.json.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 
 @Composable
 fun MainScreen(navController: NavController, modifier: Modifier = Modifier) {
@@ -63,10 +51,11 @@ fun MainScreen(navController: NavController, modifier: Modifier = Modifier) {
             ) ?: "east"
         )
     }
+    val client = PostClient()
 
     LaunchedEffect(Unit) {
         if (auto) {
-            sendPostRequest(context, selectedDoor, phone)
+            client.sendPostRequest(context, selectedDoor, phone)
         }
     }
 
@@ -108,10 +97,10 @@ fun MainScreen(navController: NavController, modifier: Modifier = Modifier) {
             horizontalArrangement = Arrangement.Center
         ) {
             RoundBtn(text = stringResource(id = R.string.east_door),
-                onClick = { sendPostRequest(context, "east", phone) })
+                onClick = { client.sendPostRequest(context, "east", phone) })
             Spacer(modifier = Modifier.width(32.dp))
             RoundBtn(text = stringResource(id = R.string.west_door),
-                onClick = { sendPostRequest(context, "west", phone) })
+                onClick = { client.sendPostRequest(context, "west", phone) })
         }
         Spacer(modifier = Modifier.size(64.dp))
         Button(
@@ -191,50 +180,6 @@ fun LogoutAlert(onConfirm: () -> Unit, onDismiss: () -> Unit) {
         })
 }
 
-fun sendPostRequest(context: Context, door: String, phone: String?) {
-
-    val client = HttpClient(Android) {
-        install(ContentNegotiation) {
-            json(Json {
-                ignoreUnknownKeys = true
-                isLenient = true
-            })
-        }
-    }
-
-    val equipmentId = if (door == "east") 15247 else 15248
-    val doorName = if (equipmentId == 15247) "东门" else "西门"
-
-    Toast.makeText(context, "$doorName 开门中...", Toast.LENGTH_SHORT).show()
-
-    CoroutineScope(Dispatchers.IO).launch {
-        try {
-            val response: HttpResponse =
-                client.post("https://wxapi1210.grpu.com.cn/thirdParty/extOpenKey") {
-                    contentType(ContentType.Application.Json)
-                    headers {
-                        append(HttpHeaders.ContentType, "application/json;charset=UTF-8")
-                    }
-                    setBody(RequestBody(phone = phone ?: "", equipmentId = equipmentId))
-                }
-
-            val responseBody = response.bodyAsText()
-
-            CoroutineScope(Dispatchers.Main).launch {
-                Toast.makeText(
-                    context, "$doorName $responseBody", Toast.LENGTH_SHORT
-                ).show()
-            }
-        } catch (e: Exception) {
-            CoroutineScope(Dispatchers.Main).launch {
-                Toast.makeText(context, "Request failed: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-}
-
-@Serializable
-data class RequestBody(val phone: String, val equipmentId: Int)
 
 @Preview(showBackground = true)
 @Composable
