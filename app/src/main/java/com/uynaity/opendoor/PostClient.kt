@@ -21,6 +21,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 class PostClient {
     suspend fun sendPostRequest(context: Context, door: String, phone: String?): Pair<Int, String> {
@@ -52,7 +54,9 @@ class PostClient {
                     }
 
                 val responseBody = response.bodyAsText()
-                result.complete(Pair(response.status.value, responseBody))
+                val jsonResponse = Json.decodeFromString<JsonObject>(responseBody)
+                val msg = jsonResponse["msg"]?.jsonPrimitive?.content ?: "Unknown error"
+                result.complete(Pair(response.status.value, msg))
             } catch (e: Exception) {
                 result.complete(Pair(-1, e.message ?: "Unknown error"))
             }
