@@ -1,6 +1,7 @@
 package com.uynaity.opendoor
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -25,9 +26,18 @@ class LinkActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        handleIntent(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent?) {
         setContent {
             悦开门Theme {
-                val deepLinkData = intent.data?.host
+                val deepLinkData = intent?.data?.host
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     DefaultScreen(
                         deepLinkData.toString(), modifier = Modifier.padding(innerPadding)

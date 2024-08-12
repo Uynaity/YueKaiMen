@@ -27,13 +27,13 @@
         </activity>
         <activity
             android:name=".LinkActivity"
+            android:launchMode="singleTop"
+            android:excludeFromRecents="true"
             android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
                 <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="kaimen" android:host="east" />
-                <data android:scheme="kaimen" android:host="west" />
+                <data android:scheme="kaimen" />
             </intent-filter>
         </activity>
 
