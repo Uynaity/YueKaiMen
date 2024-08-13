@@ -74,8 +74,7 @@ fun DefaultScreen(door: String, modifier: Modifier = Modifier, onTaskCompleted: 
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        RoundBtn(text = doorName,
-            onClick = { client.sendPostRequest(context, door, phone) })
+        RoundBtn(text = doorName, onClick = { client.sendPostRequest(context, door, phone) })
     }
 }
 

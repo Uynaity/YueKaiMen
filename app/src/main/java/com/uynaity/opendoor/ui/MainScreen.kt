@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
@@ -31,6 +32,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.uynaity.opendoor.DoorInfo
@@ -73,8 +75,7 @@ fun MainScreen(navController: NavController, modifier: Modifier = Modifier) {
     }
 
     Column(
-        modifier = modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
+        modifier = modifier.fillMaxSize(), verticalArrangement = Arrangement.Center
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -110,12 +111,15 @@ fun MainScreen(navController: NavController, modifier: Modifier = Modifier) {
             horizontalArrangement = Arrangement.Center
         ) {
             doorInfoList.forEach { doorInfo ->
-                RoundBtn(text = doorInfo.equipmentName, onClick = {
-                    client.sendPostRequest(
-                        context, doorInfo.equipmentId.toString(), phone
-                    )
-                })
-                Spacer(modifier = Modifier.size(16.dp))
+                RoundBtn(modifier = Modifier
+                    .padding(16.dp)
+                    .align(Alignment.CenterVertically),
+                    text = doorInfo.equipmentName,
+                    onClick = {
+                        client.sendPostRequest(
+                            context, doorInfo.equipmentId.toString(), phone
+                        )
+                    })
             }
         }
         Spacer(modifier = Modifier.size(64.dp))
@@ -159,6 +163,7 @@ fun DoorSelection(
     ) {
         doorInfoList.forEach { doorInfo ->
             Row(
+                modifier = Modifier.padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
@@ -168,7 +173,6 @@ fun DoorSelection(
                     enabled = enabled
                 )
                 Text(text = doorInfo.equipmentName)
-                Spacer(modifier = Modifier.size(16.dp))
             }
         }
     }
@@ -190,7 +194,9 @@ fun RoundBtn(
             .size(128.dp)
             .clip(CircleShape)
     ) {
-        Text(text = text)
+        Text(
+            text = text, fontSize = 20.sp
+        )
     }
 }
 
