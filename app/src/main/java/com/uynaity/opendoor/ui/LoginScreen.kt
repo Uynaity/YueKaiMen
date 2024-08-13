@@ -28,8 +28,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.uynaity.opendoor.PostClient
 import com.uynaity.opendoor.R
 import com.uynaity.opendoor.Routes
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun LoginScreen(navController: NavController, modifier: Modifier = Modifier) {
@@ -51,20 +56,34 @@ fun LoginScreen(navController: NavController, modifier: Modifier = Modifier) {
             onValueChange = { phone = it },
             label = { Text(text = stringResource(id = R.string.user_phone)) },
             keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Phone),
-            modifier = modifier.fillMaxWidth().padding(horizontal = 32.dp)
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(horizontal = 32.dp)
         )
         Spacer(modifier = Modifier.height(16.dp))
         Button(
             onClick = {
                 if (phone.length == 11) {
-                    val sharedPreferences =
-                        context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-                    with(sharedPreferences.edit()) {
-                        putString("phone", phone)
-                        apply()
-                    }
-                    navController.navigate(Routes.main) {
-                        popUpTo(Routes.login) { inclusive = true }
+                    CoroutineScope(Dispatchers.IO).launch {
+                        val client = PostClient()
+                        val doorInfoList = client.getDoorInfo(context, phone)
+                        if (doorInfoList != null) {
+                            val sharedPreferences =
+                                context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                            with(sharedPreferences.edit()) {
+                                putString("phone", phone)
+                                apply()
+                            }
+                            withContext(Dispatchers.Main) {
+                                navController.navigate(Routes.main) {
+                                    popUpTo(Routes.login) { inclusive = true }
+                                }
+                            }
+                        } else {
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(context, "登录失败", Toast.LENGTH_SHORT).show()
+                            }
+                        }
                     }
                 } else {
                     Toast.makeText(context, "手机号码格式错误", Toast.LENGTH_SHORT).show()

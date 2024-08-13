@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
@@ -34,25 +33,34 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.uynaity.opendoor.DoorInfo
 import com.uynaity.opendoor.PostClient
 import com.uynaity.opendoor.R
 import com.uynaity.opendoor.Routes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import kotlin.toString
 
 @Composable
 fun MainScreen(navController: NavController, modifier: Modifier = Modifier) {
     var showLogoutDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val sharedPreferences = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+    val doorInfoJson = sharedPreferences.getString("door_info", null)
+    val doorInfoList: List<DoorInfo> = if (doorInfoJson != null) {
+        Json.decodeFromString(doorInfoJson)
+    } else {
+        emptyList()
+    }
     val phone = sharedPreferences.getString("phone", "")
     var auto by remember { mutableStateOf(sharedPreferences.getBoolean("auto", false)) }
     var selectedDoor by remember {
         mutableStateOf(
             sharedPreferences.getString(
-                "selected_door", "east"
-            ) ?: "east"
+                "selected_door", doorInfoList.firstOrNull()?.equipmentId.toString()
+            ) ?: ""
         )
     }
     val client = PostClient()
@@ -87,7 +95,7 @@ fun MainScreen(navController: NavController, modifier: Modifier = Modifier) {
         }
         Spacer(modifier = Modifier.size(16.dp))
         DoorSelection(
-            selectedDoor = selectedDoor, onDoorSelected = { door ->
+            doorInfoList = doorInfoList, selectedDoor = selectedDoor, onDoorSelected = { door ->
                 selectedDoor = door
                 with(sharedPreferences.edit()) {
                     putString("selected_door", door)
@@ -101,11 +109,14 @@ fun MainScreen(navController: NavController, modifier: Modifier = Modifier) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            RoundBtn(text = stringResource(id = R.string.east_door),
-                onClick = { client.sendPostRequest(context, "east", phone) })
-            Spacer(modifier = Modifier.width(32.dp))
-            RoundBtn(text = stringResource(id = R.string.west_door),
-                onClick = { client.sendPostRequest(context, "west", phone) })
+            doorInfoList.forEach { doorInfo ->
+                RoundBtn(text = doorInfo.equipmentName, onClick = {
+                    client.sendPostRequest(
+                        context, doorInfo.equipmentId.toString(), phone
+                    )
+                })
+                Spacer(modifier = Modifier.size(16.dp))
+            }
         }
         Spacer(modifier = Modifier.size(64.dp))
         Button(
@@ -123,6 +134,8 @@ fun MainScreen(navController: NavController, modifier: Modifier = Modifier) {
             val sharedPreferences = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
             with(sharedPreferences.edit()) {
                 putString("phone", "")
+                putString("selected_door", "")
+                putBoolean("auto", false)
                 apply()
             }
             navController.navigate(Routes.login) {
@@ -133,33 +146,37 @@ fun MainScreen(navController: NavController, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun DoorSelection(selectedDoor: String, onDoorSelected: (String) -> Unit, enabled: Boolean) {
+fun DoorSelection(
+    doorInfoList: List<DoorInfo>,
+    selectedDoor: String,
+    onDoorSelected: (String) -> Unit,
+    enabled: Boolean
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
-        RadioButton(
-            selected = selectedDoor == "east",
-            onClick = { onDoorSelected("east") },
-            enabled = enabled
-        )
-        Text(text = stringResource(id = R.string.east_door))
-        Spacer(modifier = Modifier.width(32.dp))
-        RadioButton(
-            selected = selectedDoor == "west",
-            onClick = { onDoorSelected("west") },
-            enabled = enabled
-        )
-        Text(text = stringResource(id = R.string.west_door))
+        doorInfoList.forEach { doorInfo ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                RadioButton(
+                    selected = selectedDoor == doorInfo.equipmentId.toString(),
+                    onClick = { onDoorSelected(doorInfo.equipmentId.toString()) },
+                    enabled = enabled
+                )
+                Text(text = doorInfo.equipmentName)
+                Spacer(modifier = Modifier.size(16.dp))
+            }
+        }
     }
 }
 
 @Composable
 fun RoundBtn(
-    text: String,
-    modifier: Modifier = Modifier,
-    onClick: suspend () -> Pair<Int, String>
+    text: String, modifier: Modifier = Modifier, onClick: suspend () -> Pair<Int, String>
 ) {
     val context = LocalContext.current
 
@@ -169,8 +186,7 @@ fun RoundBtn(
                 val (code, message) = onClick()
                 Toast.makeText(context, "$code $message", Toast.LENGTH_SHORT).show()
             }
-        },
-        modifier = modifier
+        }, modifier = modifier
             .size(128.dp)
             .clip(CircleShape)
     ) {
