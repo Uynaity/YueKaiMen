@@ -15,7 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.RadioButton
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -94,7 +94,6 @@ fun MainScreen(navController: NavController, modifier: Modifier = Modifier) {
             )
             Text(text = stringResource(id = R.string.auto_open))
         }
-        Spacer(modifier = Modifier.size(16.dp))
         DoorSelection(
             doorInfoList = doorInfoList, selectedDoor = selectedDoor, onDoorSelected = { door ->
                 selectedDoor = door
@@ -112,7 +111,7 @@ fun MainScreen(navController: NavController, modifier: Modifier = Modifier) {
         ) {
             doorInfoList.forEach { doorInfo ->
                 RoundBtn(modifier = Modifier
-                    .padding(16.dp)
+                    .padding(8.dp)
                     .align(Alignment.CenterVertically),
                     text = doorInfo.equipmentName,
                     onClick = {
@@ -157,23 +156,20 @@ fun DoorSelection(
     enabled: Boolean
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
         doorInfoList.forEach { doorInfo ->
-            Row(
-                modifier = Modifier.padding(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                RadioButton(
-                    selected = selectedDoor == doorInfo.equipmentId.toString(),
-                    onClick = { onDoorSelected(doorInfo.equipmentId.toString()) },
-                    enabled = enabled
-                )
-                Text(text = doorInfo.equipmentName)
-            }
+            FilterChip(
+                selected = selectedDoor == doorInfo.equipmentId.toString(),
+                onClick = { onDoorSelected(doorInfo.equipmentId.toString()) },
+                enabled = enabled,
+                label = { Text(text = doorInfo.equipmentName) },
+                modifier = Modifier.padding(4.dp)
+            )
         }
     }
 }
